@@ -74,21 +74,39 @@
         };
     </script>
     <div id="info">
-        <h3>时空曲率与引力模拟</h3>
-        <p><span class="highlight">黄色</span>：恒星 (Sun)</p>
-        <p><span style="color:#00ffff; font-weight:bold;">多色</span>：行星 (Planets)</p>
-        <p><span style="color:#aaaaaa; font-weight:bold;">灰色</span>：网格投影球 (Shadow)</p>
-        <p>网格展示了引力场造成的时空弯曲。</p>
-        <p><i>拖动鼠标旋转视角，滚轮缩放</i></p>
-        <div class="btn-group">
-            <button id="addPlanetBtn" class="action-btn">添加随机行星</button>
-            <button id="resetBtn" class="action-btn">重置为一个</button>
-            <button id="toggleGridBtn" class="action-btn">隐藏网格</button>
-            <button id="togglePlanetGravityBtn" class="action-btn">显示行星重力坑</button>
+        <div id="infoHeader" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; pointer-events: auto; margin-bottom: 10px;">
+            <h3 style="margin: 0;">时空曲率与引力模拟</h3>
+            <span id="toggleIcon" style="font-size: 20px; font-weight: bold; line-height: 1;">−</span>
+        </div>
+        <div id="infoContent">
+            <p><span class="highlight">黄色</span>：恒星 (Sun)</p>
+            <p><span style="color:#00ffff; font-weight:bold;">多色</span>：行星 (Planets)</p>
+            <p><span style="color:#aaaaaa; font-weight:bold;">灰色</span>：网格投影球 (Shadow)</p>
+            <p>网格展示了引力场造成的时空弯曲。</p>
+            <p><i>拖动鼠标旋转视角，滚轮缩放</i></p>
+            <div class="btn-group">
+                <button id="addPlanetBtn" class="action-btn">添加随机行星</button>
+                <button id="resetBtn" class="action-btn">重置为一个</button>
+                <button id="toggleGridBtn" class="action-btn">隐藏网格</button>
+                <button id="togglePlanetGravityBtn" class="action-btn">显示行星重力坑</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // 控制面板收起展开逻辑
+        document.getElementById('infoHeader').addEventListener('click', () => {
+            const content = document.getElementById('infoContent');
+            const icon = document.getElementById('toggleIcon');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.innerText = '−';
+            } else {
+                content.style.display = 'none';
+                icon.innerText = '+';
+            }
+        });
+
         // --- 1. 初始化场景 ---
         const scene = new THREE.Scene();
         // 添加一点背景雾效，增加深邃感
