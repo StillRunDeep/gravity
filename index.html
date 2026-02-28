@@ -51,6 +51,7 @@
             <button id="addPlanetBtn" style="padding: 5px 10px; cursor: pointer; background: #222; color: #fff; border: 1px solid #666; border-radius: 4px;">添加随机行星</button>
             <button id="resetBtn" style="padding: 5px 10px; cursor: pointer; background: #222; color: #fff; border: 1px solid #666; border-radius: 4px; margin-left: 5px;">重置为一个</button>
             <button id="toggleGridBtn" style="padding: 5px 10px; cursor: pointer; background: #222; color: #fff; border: 1px solid #666; border-radius: 4px; margin-left: 5px;">隐藏网格</button>
+            <button id="togglePlanetGravityBtn" style="padding: 5px 10px; cursor: pointer; background: #222; color: #fff; border: 1px solid #666; border-radius: 4px; margin-left: 5px; margin-top: 5px;">隐藏行星重力坑</button>
         </div>
     </div>
 
@@ -225,14 +226,23 @@
             e.target.innerText = gridVisible ? '隐藏网格' : '显示网格';
         });
 
+        // 行星重力坑显示/隐藏逻辑
+        let planetGravityEnabled = true;
+        document.getElementById('togglePlanetGravityBtn').addEventListener('click', (e) => {
+            planetGravityEnabled = !planetGravityEnabled;
+            e.target.innerText = planetGravityEnabled ? '隐藏行星重力坑' : '显示行星重力坑';
+        });
+
         // --- 6. 辅助函数：计算某一点的 Y 轴凹陷深度 ---
         function calculateGridY(x, z) {
             const distSun = Math.sqrt((x - sun.pos.x)**2 + (z - sun.pos.z)**2);
             let dep = - (sun.mass * 0.2) / (distSun + 2.5);
             
-            for (let p of planets) {
-                const distPlanet = Math.sqrt((x - p.pos.x)**2 + (z - p.pos.z)**2);
-                dep -= (p.mass * 6) / (distPlanet + 0.6);
+            if (planetGravityEnabled) {
+                for (let p of planets) {
+                    const distPlanet = Math.sqrt((x - p.pos.x)**2 + (z - p.pos.z)**2);
+                    dep -= (p.mass * 6) / (distPlanet + 0.6);
+                }
             }
             return dep;
         }
