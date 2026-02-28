@@ -351,39 +351,6 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // 处理坠入太阳的行星 (延迟销毁)
-            for (let i = planets.length - 1; i >= 0; i--) {
-                const p = planets[i];
-                const distVec = new THREE.Vector3().subVectors(sun.pos, p.pos);
-                
-                // 完全进入太阳内部：两球心距离加上行星自身半径必须小于太阳的半径
-                if (distVec.length() + p.radius <= sun.radius) {
-                    // 累计在太阳内部的时间
-                    p.insideSunTime += TIME_STEP;
-                    
-                    // 如果超过约 2 秒 (根据 TIME_STEP 换算，假设 60fps)
-                    // TIME_STEP 这里是 0.05，现实的 1 帧大约是 16ms。
-                    // 2秒大约是 120帧。累计的物理时间: 120 * 0.05 = 6.0
-                    // 为了更准确使用实际时间，我们假设 requestAnimationFrame 稳定在 60Hz
-                    // 所以 2秒 = 120帧，这里给个阈值 6.0 左右的物理累加时间，或者直接用帧数计数
-                } else {
-                    // 如果中途飞出去了，重置计时器
-                    p.insideSunTime = 0;
-                }
-
-                // 这里我们假设 TIME_STEP=0.05 对应一帧，2秒(120帧)的话 time = 6.0
-                if (p.insideSunTime >= 6.0) {
-                    // 销毁并移除
-                    scene.remove(p.mesh, p.trailLine, p.shadowBall, p.shadowTrailLine, p.connectorLine);
-                    p.mesh.geometry.dispose(); p.mesh.material.dispose();
-                    p.trailLine.geometry.dispose(); p.trailLine.material.dispose();
-                    p.shadowBall.geometry.dispose(); p.shadowBall.material.dispose();
-                    p.shadowTrailLine.geometry.dispose(); p.shadowTrailLine.material.dispose();
-                    p.connectorLine.geometry.dispose(); p.connectorLine.material.dispose();
-                    planets.splice(i, 1);
-                }
-            }
-
             for (let p of planets) {
                 // 物理计算
                 const distVec = new THREE.Vector3().subVectors(sun.pos, p.pos);
