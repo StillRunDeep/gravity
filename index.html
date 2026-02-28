@@ -338,8 +338,8 @@
             const bgColor = new THREE.Color(0x050505); // 雾/背景色
             for (let i = 0; i < length; i++) {
                 const ratio = i / (length - 1 || 1);
-                // 使用平方缓动让尾部变暗更快，头部更亮
-                const easeRatio = ratio * ratio; 
+                // 渐隐效果减弱一半：让尾部最低保持 50% 的亮度
+                const easeRatio = 0.5 + 0.5 * (ratio * ratio); 
                 const c = bgColor.clone().lerp(baseColor, easeRatio);
                 colors[i * 3] = c.r;
                 colors[i * 3 + 1] = c.g;
