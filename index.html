@@ -356,9 +356,18 @@
                 const distVec = new THREE.Vector3().subVectors(sun.pos, p.pos);
                 const r = distVec.length();
                 
-                // F = G*M*m / r^2
-                const F = (G * sun.mass * p.mass) / (r * r);
-                const forceVec = distVec.normalize().multiplyScalar(F);
+                // 避免引力奇点（数值爆炸）：引入太阳内部的真实引力模型
+                let F;
+                if (r >= sun.radius) {
+                    // 在太阳外部：标准的牛顿万有引力 F = G*M*m / r^2
+                    F = (G * sun.mass * p.mass) / (r * r);
+                } else {
+                    // 在太阳内部：假设太阳密度均匀，引力与距离成正比递减 F = G*M*m*r / R^3
+                    F = (G * sun.mass * p.mass * r) / (Math.pow(sun.radius, 3));
+                }
+                
+                // 防止 r=0 时 normalize() 产生 NaN
+                const forceVec = r > 0 ? distVec.normalize().multiplyScalar(F) : new THREE.Vector3(0,0,0);
                 
                 const acc = forceVec.divideScalar(p.mass);
                 p.vel.add(acc.multiplyScalar(TIME_STEP));
