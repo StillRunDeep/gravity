@@ -197,6 +197,7 @@
             const shadowGeo = new THREE.SphereGeometry(radius, 16, 16);
             const shadowMat = new THREE.MeshBasicMaterial({ color: 0x888888, wireframe: true, transparent: true, opacity: 0.6 });
             const shadowBall = new THREE.Mesh(shadowGeo, shadowMat);
+            shadowBall.visible = planetGravityEnabled;
             scene.add(shadowBall);
 
             // 投影轨迹线
@@ -211,6 +212,7 @@
             const connectorMat = new THREE.LineDashedMaterial({ color: 0x555555, dashSize: 1, gapSize: 0.5 });
             const connectorLine = new THREE.Line(connectorGeo, connectorMat);
             connectorLine.computeLineDistances();
+            connectorLine.visible = planetGravityEnabled;
             scene.add(connectorLine);
             
             planets.push({
@@ -287,10 +289,15 @@
         });
 
         // 行星重力坑显示/隐藏逻辑
-        let planetGravityEnabled = false;
         document.getElementById('togglePlanetGravityBtn').addEventListener('click', (e) => {
             planetGravityEnabled = !planetGravityEnabled;
             e.target.innerText = planetGravityEnabled ? '隐藏行星重力坑' : '显示行星重力坑';
+            
+            // 同步控制投影球和连线的显示
+            for (let p of planets) {
+                p.shadowBall.visible = planetGravityEnabled;
+                p.connectorLine.visible = planetGravityEnabled;
+            }
         });
 
         // 阻力系数逻辑
