@@ -331,6 +331,16 @@
         trailLengthSlider.addEventListener('input', (e) => {
             maxTrailLength = parseInt(e.target.value);
             trailLengthValueDisplay.innerText = maxTrailLength;
+            
+            // 立即生效：如果新长度比当前存在的轨迹短，则截断多余的点
+            for (let p of planets) {
+                if (p.trail.length > maxTrailLength) {
+                    p.trail = p.trail.slice(p.trail.length - maxTrailLength);
+                }
+                if (p.shadowTrail.length > maxTrailLength) {
+                    p.shadowTrail = p.shadowTrail.slice(p.shadowTrail.length - maxTrailLength);
+                }
+            }
         });
 
         // --- 6. 辅助函数：计算某一点的 Y 轴凹陷深度 ---
