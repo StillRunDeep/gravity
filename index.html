@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>万有引力：曲面与投影模拟</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #050505; color: #fff; font-family: 'Segoe UI', sans-serif; }
@@ -15,10 +16,42 @@
             pointer-events: none;
             border-radius: 8px;
             max-width: 300px;
+            width: calc(100% - 70px);
+            box-sizing: border-box;
         }
-        h3 { margin: 0 0 10px 0; color: #00ffff; }
+        h3 { margin: 0 0 10px 0; color: #00ffff; font-size: 1.1em; }
         p { margin: 5px 0; font-size: 14px; color: #ccc; }
         .highlight { color: #ffff00; font-weight: bold; }
+        
+        /* 移动端适配按钮容器 */
+        .btn-group {
+            margin-top: 15px;
+            pointer-events: auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            cursor: pointer;
+            background: #222;
+            color: #fff;
+            border: 1px solid #666;
+            border-radius: 4px;
+            font-size: 13px;
+            flex: 1 1 calc(50% - 4px); /* 在移动端两列排布 */
+            text-align: center;
+            box-sizing: border-box;
+            white-space: nowrap;
+        }
+
+        .action-btn:hover { background: #333; }
+        .action-btn:active { background: #555; }
+
+        @media (min-width: 600px) {
+            .action-btn { flex: 1 1 auto; } /* 在宽屏自适应宽度 */
+        }
     </style>
     <!-- 引入 Three.js -->
     <script src="js/three.min.js"></script>
@@ -47,11 +80,11 @@
         <p><span style="color:#aaaaaa; font-weight:bold;">灰色</span>：网格投影球 (Shadow)</p>
         <p>网格展示了引力场造成的时空弯曲。</p>
         <p><i>拖动鼠标旋转视角，滚轮缩放</i></p>
-        <div style="margin-top: 15px; pointer-events: auto;">
-            <button id="addPlanetBtn" style="padding: 5px 10px; cursor: pointer; background: #222; color: #fff; border: 1px solid #666; border-radius: 4px;">添加随机行星</button>
-            <button id="resetBtn" style="padding: 5px 10px; cursor: pointer; background: #222; color: #fff; border: 1px solid #666; border-radius: 4px; margin-left: 5px;">重置为一个</button>
-            <button id="toggleGridBtn" style="padding: 5px 10px; cursor: pointer; background: #222; color: #fff; border: 1px solid #666; border-radius: 4px; margin-left: 5px;">隐藏网格</button>
-            <button id="togglePlanetGravityBtn" style="padding: 5px 10px; cursor: pointer; background: #222; color: #fff; border: 1px solid #666; border-radius: 4px; margin-left: 5px; margin-top: 5px;">显示行星重力坑</button>
+        <div class="btn-group">
+            <button id="addPlanetBtn" class="action-btn">添加随机行星</button>
+            <button id="resetBtn" class="action-btn">重置为一个</button>
+            <button id="toggleGridBtn" class="action-btn">隐藏网格</button>
+            <button id="togglePlanetGravityBtn" class="action-btn">显示行星重力坑</button>
         </div>
     </div>
 
