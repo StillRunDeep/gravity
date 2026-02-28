@@ -267,7 +267,7 @@
 
         // --- 5. 创建 "加粗" 曲面网格 ---
         const gridSize = 80;
-        const gridSegments = 80; // 增加密度以获得更平滑的弯曲
+        const gridSegments = 120; // 进一步增加密度以获得更细腻的网格
         const planeGeo = new THREE.PlaneGeometry(gridSize, gridSize, gridSegments, gridSegments);
         planeGeo.rotateX(-Math.PI / 2); // 旋转至水平
 
@@ -281,7 +281,7 @@
             });
         }
 
-        const wireMat = new THREE.MeshBasicMaterial({ color: 0x004488, wireframe: true, transparent: true, opacity: 0.4 });
+        const wireMat = new THREE.MeshBasicMaterial({ color: 0x0088ff, wireframe: true, transparent: true, opacity: 0.6 });
         const solidMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
 
         const planeWire = new THREE.Mesh(planeGeo, wireMat);
