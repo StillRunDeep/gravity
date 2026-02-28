@@ -180,7 +180,7 @@
             
             // 轨迹线
             const trailGeometry = new THREE.BufferGeometry();
-            const trailMaterial = new THREE.LineBasicMaterial({ vertexColors: true, opacity: 1.0, transparent: true, linewidth: 2 });
+            const trailMaterial = new THREE.LineBasicMaterial({ vertexColors: true, opacity: 1.0, transparent: true, linewidth: 2, blending: THREE.AdditiveBlending, depthWrite: false });
             const trailLine = new THREE.Line(trailGeometry, trailMaterial);
             scene.add(trailLine);
             
@@ -192,7 +192,7 @@
 
             // 投影轨迹线
             const shadowTrailGeometry = new THREE.BufferGeometry();
-            const shadowTrailMaterial = new THREE.LineBasicMaterial({ vertexColors: true, opacity: 0.8, transparent: true, linewidth: 2 });
+            const shadowTrailMaterial = new THREE.LineBasicMaterial({ vertexColors: true, opacity: 0.8, transparent: true, linewidth: 2, blending: THREE.AdditiveBlending, depthWrite: false });
             const shadowTrailLine = new THREE.Line(shadowTrailGeometry, shadowTrailMaterial);
             scene.add(shadowTrailLine);
             
