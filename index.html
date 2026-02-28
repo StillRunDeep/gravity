@@ -88,7 +88,7 @@
             <div style="margin-top: 10px; margin-bottom: 5px; pointer-events: auto;">
                 <label for="dragSlider" style="font-size: 13px; color: #ccc; display: flex; justify-content: space-between;">
                     <span>轨道衰减:</span>
-                    <span id="dragValue">0.0000</span>
+                    <span id="dragValue">0.00%</span>
                 </label>
                 <input type="range" id="dragSlider" min="0" max="0.001" step="0.0001" value="0" style="width: 100%; margin-top: 5px;">
             </div>
@@ -300,7 +300,7 @@
         
         dragSlider.addEventListener('input', (e) => {
             dragCoefficient = parseFloat(e.target.value);
-            dragValueDisplay.innerText = dragCoefficient.toFixed(3);
+            dragValueDisplay.innerText = (dragCoefficient * 100).toFixed(2) + '%';
         });
 
         // --- 6. 辅助函数：计算某一点的 Y 轴凹陷深度 ---
