@@ -50,6 +50,7 @@
         <div style="margin-top: 15px; pointer-events: auto;">
             <button id="addPlanetBtn" style="padding: 5px 10px; cursor: pointer; background: #222; color: #fff; border: 1px solid #666; border-radius: 4px;">添加随机行星</button>
             <button id="resetBtn" style="padding: 5px 10px; cursor: pointer; background: #222; color: #fff; border: 1px solid #666; border-radius: 4px; margin-left: 5px;">重置为一个</button>
+            <button id="toggleGridBtn" style="padding: 5px 10px; cursor: pointer; background: #222; color: #fff; border: 1px solid #666; border-radius: 4px; margin-left: 5px;">隐藏网格</button>
         </div>
     </div>
 
@@ -136,6 +137,12 @@
             const shadowMat = new THREE.MeshBasicMaterial({ color: 0x888888, wireframe: true, transparent: true, opacity: 0.6 });
             const shadowBall = new THREE.Mesh(shadowGeo, shadowMat);
             scene.add(shadowBall);
+
+            // 投影轨迹线
+            const shadowTrailGeometry = new THREE.BufferGeometry();
+            const shadowTrailMaterial = new THREE.LineBasicMaterial({ color: 0x888888, opacity: 0.4, transparent: true });
+            const shadowTrailLine = new THREE.Line(shadowTrailGeometry, shadowTrailMaterial);
+            scene.add(shadowTrailLine);
             
             // 连线
             const connectorGeo = new THREE.BufferGeometry();
@@ -146,7 +153,7 @@
             scene.add(connectorLine);
             
             planets.push({
-                mass, radius, pos, vel, mesh, trail: [], trailLine, shadowBall, connectorLine, connectorGeo
+                mass, radius, pos, vel, mesh, trail: [], trailLine, shadowBall, shadowTrail: [], shadowTrailLine, connectorLine, connectorGeo
             });
         }
 
@@ -155,6 +162,7 @@
                 scene.remove(p.mesh);
                 scene.remove(p.trailLine);
                 scene.remove(p.shadowBall);
+                scene.remove(p.shadowTrailLine);
                 scene.remove(p.connectorLine);
                 p.mesh.geometry.dispose();
                 p.mesh.material.dispose();
@@ -162,6 +170,8 @@
                 p.trailLine.material.dispose();
                 p.shadowBall.geometry.dispose();
                 p.shadowBall.material.dispose();
+                p.shadowTrailLine.geometry.dispose();
+                p.shadowTrailLine.material.dispose();
                 p.connectorLine.geometry.dispose();
                 p.connectorLine.material.dispose();
             }
@@ -205,6 +215,15 @@
         
         scene.add(planeWire);
         scene.add(planeSolid);
+
+        // 网格显示/隐藏逻辑
+        let gridVisible = true;
+        document.getElementById('toggleGridBtn').addEventListener('click', (e) => {
+            gridVisible = !gridVisible;
+            planeWire.visible = gridVisible;
+            planeSolid.visible = gridVisible;
+            e.target.innerText = gridVisible ? '隐藏网格' : '显示网格';
+        });
 
         // --- 6. 辅助函数：计算某一点的 Y 轴凹陷深度 ---
         function calculateGridY(x, z) {
@@ -254,17 +273,24 @@
                 if(p.trail.length > 400) p.trail.shift();
                 p.trail.push(p.pos.clone());
                 p.trailLine.geometry.setFromPoints(p.trail);
+
+                // 更新投影轨迹
+                if(p.shadowTrail.length > 400) p.shadowTrail.shift();
+                p.shadowTrail.push(p.shadowBall.position.clone());
+                p.shadowTrailLine.geometry.setFromPoints(p.shadowTrail);
             }
 
-            // 更新网格顶点
-            const positions = planeGeo.attributes.position;
-            for (let i = 0; i < positions.count; i++) {
-                const ox = originalPositions[i].x;
-                const oz = originalPositions[i].z;
-                const newY = calculateGridY(ox, oz);
-                positions.setY(i, newY);
+            // 更新网格顶点 (只有在网格可见时才更新，优化性能)
+            if (gridVisible) {
+                const positions = planeGeo.attributes.position;
+                for (let i = 0; i < positions.count; i++) {
+                    const ox = originalPositions[i].x;
+                    const oz = originalPositions[i].z;
+                    const newY = calculateGridY(ox, oz);
+                    positions.setY(i, newY);
+                }
+                positions.needsUpdate = true;
             }
-            positions.needsUpdate = true;
             
             // 太阳发光层简单脉动效果
             const time = Date.now() * 0.001;
