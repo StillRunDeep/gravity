@@ -84,6 +84,15 @@
             <p><span style="color:#aaaaaa; font-weight:bold;">灰色</span>：网格投影球 (Shadow)</p>
             <p>网格展示了引力场造成的时空弯曲。</p>
             <p><i>拖动鼠标旋转视角，滚轮缩放</i></p>
+            
+            <div style="margin-top: 10px; margin-bottom: 5px; pointer-events: auto;">
+                <label for="dragSlider" style="font-size: 13px; color: #ccc; display: flex; justify-content: space-between;">
+                    <span>空间阻力系数:</span>
+                    <span id="dragValue">0.000</span>
+                </label>
+                <input type="range" id="dragSlider" min="0" max="0.02" step="0.001" value="0" style="width: 100%; margin-top: 5px;">
+            </div>
+
             <div class="btn-group">
                 <button id="addPlanetBtn" class="action-btn">添加随机行星</button>
                 <button id="resetBtn" class="action-btn">重置为一个</button>
@@ -284,6 +293,16 @@
             e.target.innerText = planetGravityEnabled ? '隐藏行星重力坑' : '显示行星重力坑';
         });
 
+        // 阻力系数逻辑
+        let dragCoefficient = 0;
+        const dragSlider = document.getElementById('dragSlider');
+        const dragValueDisplay = document.getElementById('dragValue');
+        
+        dragSlider.addEventListener('input', (e) => {
+            dragCoefficient = parseFloat(e.target.value);
+            dragValueDisplay.innerText = dragCoefficient.toFixed(3);
+        });
+
         // --- 6. 辅助函数：计算某一点的 Y 轴凹陷深度 ---
         function calculateGridY(x, z) {
             const distSun = Math.sqrt((x - sun.pos.x)**2 + (z - sun.pos.z)**2);
@@ -331,6 +350,12 @@
                 
                 const acc = forceVec.divideScalar(p.mass);
                 p.vel.add(acc.multiplyScalar(TIME_STEP));
+
+                // 应用空间阻力
+                if (dragCoefficient > 0) {
+                    p.vel.multiplyScalar(1 - dragCoefficient);
+                }
+
                 p.pos.add(p.vel.clone().multiplyScalar(TIME_STEP));
                 
                 p.mesh.position.copy(p.pos);
