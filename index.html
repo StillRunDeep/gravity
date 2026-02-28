@@ -344,7 +344,8 @@
                 const p = planets[i];
                 const distVec = new THREE.Vector3().subVectors(sun.pos, p.pos);
                 
-                if (distVec.length() <= sun.radius) {
+                // 完全进入太阳内部：两球心距离加上行星自身半径必须小于太阳的半径
+                if (distVec.length() + p.radius <= sun.radius) {
                     // 累计在太阳内部的时间
                     p.insideSunTime += TIME_STEP;
                     
