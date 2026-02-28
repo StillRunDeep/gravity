@@ -299,8 +299,10 @@
         const dragValueDisplay = document.getElementById('dragValue');
         
         dragSlider.addEventListener('input', (e) => {
-            dragCoefficient = parseFloat(e.target.value);
-            dragValueDisplay.innerText = (dragCoefficient * 100).toFixed(2) + '%';
+            const sliderValue = parseFloat(e.target.value);
+            // 将 0-100 映射到 0-0.001
+            dragCoefficient = (sliderValue / 100) * 0.001;
+            dragValueDisplay.innerText = sliderValue + '%';
         });
 
         // --- 6. 辅助函数：计算某一点的 Y 轴凹陷深度 ---
