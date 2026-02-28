@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>万有引力：曲面与投影模拟</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #050505; color: #fff; font-family: 'Segoe UI', sans-serif; }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #444;
+            padding: 15px;
+            pointer-events: none;
+            border-radius: 8px;
+            max-width: 300px;
+        }
+        h3 { margin: 0 0 10px 0; color: #00ffff; }
+        p { margin: 5px 0; font-size: 14px; color: #ccc; }
+        .highlight { color: #ffff00; font-weight: bold; }
+    </style>
+    <!-- 引入 Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div id="info">
+        <h3>时空曲率与引力模拟</h3>
+        <p><span class="highlight">黄色</span>：恒星 (Sun)</p>
+        <p><span style="color:#00ffff; font-weight:bold;">青色</span>：行星 (Planet)</p>
+        <p><span style="color:#aaaaaa; font-weight:bold;">灰色</span>：网格投影球 (Shadow)</p>
+        <p>网格展示了引力场造成的时空弯曲。</p>
+        <p><i>拖动鼠标旋转视角，滚轮缩放</i></p>
+    </div>
+
+    <script>
+        // --- 1. 初始化场景 ---
+        const scene = new THREE.Scene();
+        // 添加一点背景雾效，增加深邃感
+        scene.fog = new THREE.FogExp2(0x050505, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 40, 50); // 抬高视角
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // --- 2. 物理参数 ---
+        const G = 2; 
+        const TIME_STEP = 0.05;
+
+        // 恒星
+        const sun = {
+            mass: 500,
+            radius: 2.5,
+            pos: new THREE.Vector3(0, 0, 0),
+            mesh: null
+        };
+
+        // 行星
+        const planet = {
+            mass: 1,
+            radius: 0.8,
+            pos: new THREE.Vector3(14, 0, 0),
+            vel: new THREE.Vector3(0, 0, 5),
+            mesh: null,
+            trail: []
+        };
+
+        // 计算初始速度 (增加一点偏心率让轨道成椭圆)
+        const vCircle = Math.sqrt((G * sun.mass) / planet.pos.length());
+        planet.vel.set(0, 0, vCircle * 0.9);
+
+        // --- 3. 创建物体 ---
+
+        // A. 太阳 (自发光材质)
+        const sunGeo = new THREE.SphereGeometry(sun.radius, 32, 32);
+        const sunMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+        // 添加一个发光层（简单的PointLight或更大的透明球）
+        const sunGlowSize = sun.radius * 1.2;
+        const sunGlowGeo = new THREE.SphereGeometry(sunGlowSize, 32, 32);
+        const sunGlowMat = new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.3 });
+        
+        sun.mesh = new THREE.Mesh(sunGeo, sunMat);
+        const sunGlow = new THREE.Mesh(sunGlowGeo, sunGlowMat);
+        scene.add(sun.mesh);
+        scene.add(sunGlow);
+
+        // B. 行星
+        const planetGeo = new THREE.SphereGeometry(planet.radius, 24, 24);
+        const planetMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+        planet.mesh = new THREE.Mesh(planetGeo, planetMat);
+        scene.add(planet.mesh);
+
+        // C. 轨迹线
+        const trailGeometry = new THREE.BufferGeometry();
+        const trailMaterial = new THREE.LineBasicMaterial({ color: 0x00aaaa, opacity: 0.6, transparent: true });
+        const trailLine = new THREE.Line(trailGeometry, trailMaterial);
+        scene.add(trailLine);
+
+        // D. 投影小球 (位于网格表面的球)
+        const shadowGeo = new THREE.SphereGeometry(planet.radius, 16, 16);
+        const shadowMat = new THREE.MeshBasicMaterial({ 
+            color: 0x888888, 
+            wireframe: true, 
+            transparent: true, 
+            opacity: 0.6 
+        });
+        const shadowBall = new THREE.Mesh(shadowGeo, shadowMat);
+        scene.add(shadowBall);
+        
+        // 投影小球和行星之间的连线
+        const connectorGeo = new THREE.BufferGeometry();
+        const connectorMat = new THREE.LineDashedMaterial({ color: 0x555555, dashSize: 1, gapSize: 0.5 });
+        const connectorLine = new THREE.Line(connectorGeo, connectorMat);
+        connectorLine.computeLineDistances(); // 虚线需要计算距离
+        scene.add(connectorLine);
+
+
+        // --- 4. 创建 "加粗" 曲面网格 ---
+        // 为了让网格看起来更清楚，我们使用两层：
+        // 1. 底层：半透明黑色，遮挡视线，体现立体感
+        // 2. 顶层：明亮线条，体现网格
+        
+        const gridSize = 80;
+        const gridSegments = 80; // 增加密度以获得更平滑的弯曲
+        const planeGeo = new THREE.PlaneGeometry(gridSize, gridSize, gridSegments, gridSegments);
+        planeGeo.rotateX(-Math.PI / 2); // 旋转至水平
+
+        // 保存原始顶点数据
+        const originalPositions = [];
+        const posAttr = planeGeo.attributes.position;
+        for(let i=0; i<posAttr.count; i++){
+            originalPositions.push({
+                x: posAttr.getX(i),
+                z: posAttr.getZ(i)
+            });
+        }
+
+        // 1. 线框材质 (高亮)
+        const wireMat = new THREE.MeshBasicMaterial({ 
+            color: 0x0088ff, // 亮蓝色
+            wireframe: true,
+            transparent: true,
+            opacity: 0.5
+        });
+
+        // 2. 实体材质 (深色背景，防止线条混在一起)
+        const solidMat = new THREE.MeshBasicMaterial({
+            color: 0x000000,
+            transparent: true,
+            opacity: 0.7,
+            side: THREE.DoubleSide
+        });
+
+        // 将两者组合
+        const planeWire = new THREE.Mesh(planeGeo, wireMat);
+        const planeSolid = new THREE.Mesh(planeGeo, solidMat);
+        
+        // 防止Z-fighting (闪烁)，让线框稍微浮起一点点
+        planeSolid.position.y = -0.05; 
+        
+        scene.add(planeWire);
+        scene.add(planeSolid);
+
+
+        // --- 5. 辅助函数：计算某一点的 Y 轴凹陷深度 ---
+        function calculateGridY(x, z) {
+            // 距离太阳
+            const distSun = Math.sqrt((x - sun.pos.x)**2 + (z - sun.pos.z)**2);
+            // 距离行星
+            const distPlanet = Math.sqrt((x - planet.pos.x)**2 + (z - planet.pos.z)**2);
+
+            // 变形公式 (系数经视觉调整)
+            // 太阳造成的深坑
+            const depSun = - (sun.mass * 0.2) / (distSun + 2.5);
+            // 行星造成的动坑
+            const depPlanet = - (planet.mass * 6) / (distPlanet + 0.6);
+
+            return depSun + depPlanet;
+        }
+
+
+        // --- 6. 动画循环 ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // --- A. 物理计算 ---
+            const distVec = new THREE.Vector3().subVectors(sun.pos, planet.pos);
+            const r = distVec.length();
+            
+            // F = G*M*m / r^2
+            const F = (G * sun.mass * planet.mass) / (r * r);
+            const forceVec = distVec.normalize().multiplyScalar(F);
+            
+            const acc = forceVec.divideScalar(planet.mass);
+            planet.vel.add(acc.multiplyScalar(TIME_STEP));
+            planet.pos.add(planet.vel.clone().multiplyScalar(TIME_STEP));
+            
+            // 更新行星位置
+            planet.mesh.position.copy(planet.pos);
+
+            // --- B. 更新投影小球位置 ---
+            // 投影小球的 X, Z 与行星相同
+            const shadowX = planet.pos.x;
+            const shadowZ = planet.pos.z;
+            
+            // 计算它在网格表面的 Y 高度
+            // 这里我们传入 "0" 作为到行星的距离，因为投影球就在行星的中心位置对应的面上，
+            // 所以它处于行星自身产生的那个凹陷的最底部。
+            // 使用通用公式计算：
+            const shadowY = calculateGridY(shadowX, shadowZ);
+            
+            shadowBall.position.set(shadowX, shadowY, shadowZ);
+
+            // 更新连线 (行星 -> 投影球)
+            const connPoints = [planet.pos, shadowBall.position];
+            connectorGeo.setFromPoints(connPoints);
+            connectorLine.computeLineDistances(); // 更新虚线材质
+
+            // --- C. 更新轨迹 ---
+            if(planet.trail.length > 400) planet.trail.shift();
+            planet.trail.push(planet.pos.clone());
+            trailGeometry.setFromPoints(planet.trail);
+
+            // --- D. 更新网格顶点 ---
+            const positions = planeGeo.attributes.position;
+            
+            for (let i = 0; i < positions.count; i++) {
+                const ox = originalPositions[i].x;
+                const oz = originalPositions[i].z;
+                
+                const newY = calculateGridY(ox, oz);
+                positions.setY(i, newY);
+            }
+            positions.needsUpdate = true;
+            
+            // 太阳发光层简单脉动效果
+            const time = Date.now() * 0.001;
+            sunGlow.scale.setScalar(1 + Math.sin(time * 2) * 0.05);
+
+            // --- E. 渲染 ---
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // 窗口适配
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
