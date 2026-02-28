@@ -96,9 +96,9 @@
             <div style="margin-top: 10px; margin-bottom: 10px; pointer-events: auto;">
                 <label for="trailLengthSlider" style="font-size: 13px; color: #ccc; display: flex; justify-content: space-between;">
                     <span>轨迹线长度:</span>
-                    <span id="trailLengthValue">400</span>
+                    <span id="trailLengthValue">100</span>
                 </label>
-                <input type="range" id="trailLengthSlider" min="200" max="600" step="10" value="400" style="width: 100%; margin-top: 5px;">
+                <input type="range" id="trailLengthSlider" min="10" max="400" step="10" value="100" style="width: 100%; margin-top: 5px;">
             </div>
 
             <div class="btn-group">
@@ -324,7 +324,7 @@
         });
 
         // 轨迹长度逻辑
-        let maxTrailLength = 400;
+        let maxTrailLength = 100;
         const trailLengthSlider = document.getElementById('trailLengthSlider');
         const trailLengthValueDisplay = document.getElementById('trailLengthValue');
 
