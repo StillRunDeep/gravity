@@ -395,13 +395,13 @@
                 p.connectorLine.computeLineDistances();
 
                 // 更新轨迹
-                if(p.trail.length > 600) p.trail.shift();
+                if(p.trail.length > 1200) p.trail.shift();
                 p.trail.push(p.pos.clone());
                 p.trailLine.geometry.setFromPoints(p.trail);
                 updateTrailColors(p.trailLine.geometry, p.color, p.trail.length);
 
                 // 更新投影轨迹
-                if(p.shadowTrail.length > 600) p.shadowTrail.shift();
+                if(p.shadowTrail.length > 1200) p.shadowTrail.shift();
                 p.shadowTrail.push(p.shadowBall.position.clone());
                 p.shadowTrailLine.geometry.setFromPoints(p.shadowTrail);
                 updateTrailColors(p.shadowTrailLine.geometry, 0xffffff, p.shadowTrail.length);
