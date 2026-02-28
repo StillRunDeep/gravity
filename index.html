@@ -180,7 +180,7 @@
             
             // 轨迹线
             const trailGeometry = new THREE.BufferGeometry();
-            const trailMaterial = new THREE.LineBasicMaterial({ color: color, opacity: 1.0, transparent: true, linewidth: 2 });
+            const trailMaterial = new THREE.LineBasicMaterial({ vertexColors: true, opacity: 1.0, transparent: true, linewidth: 2 });
             const trailLine = new THREE.Line(trailGeometry, trailMaterial);
             scene.add(trailLine);
             
@@ -192,7 +192,7 @@
 
             // 投影轨迹线
             const shadowTrailGeometry = new THREE.BufferGeometry();
-            const shadowTrailMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.8, transparent: true, linewidth: 2 });
+            const shadowTrailMaterial = new THREE.LineBasicMaterial({ vertexColors: true, opacity: 0.8, transparent: true, linewidth: 2 });
             const shadowTrailLine = new THREE.Line(shadowTrailGeometry, shadowTrailMaterial);
             scene.add(shadowTrailLine);
             
@@ -205,7 +205,7 @@
             scene.add(connectorLine);
             
             planets.push({
-                mass, radius, pos, vel, mesh, trail: [], trailLine, shadowBall, shadowTrail: [], shadowTrailLine, connectorLine, connectorGeo
+                mass, radius, pos, vel, mesh, color, trail: [], trailLine, shadowBall, shadowTrail: [], shadowTrailLine, connectorLine, connectorGeo
             });
         }
 
@@ -299,6 +299,24 @@
         }
 
         // --- 7. 动画循环 ---
+        // 辅助函数：更新轨迹线顶点颜色（实现渐隐效果）
+        function updateTrailColors(geometry, baseColorHex, length) {
+            if (length === 0) return;
+            const colors = new Float32Array(length * 3);
+            const baseColor = new THREE.Color(baseColorHex);
+            const bgColor = new THREE.Color(0x050505); // 雾/背景色
+            for (let i = 0; i < length; i++) {
+                const ratio = i / (length - 1 || 1);
+                // 使用平方缓动让尾部变暗更快，头部更亮
+                const easeRatio = ratio * ratio; 
+                const c = bgColor.clone().lerp(baseColor, easeRatio);
+                colors[i * 3] = c.r;
+                colors[i * 3 + 1] = c.g;
+                colors[i * 3 + 2] = c.b;
+            }
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        }
+
         function animate() {
             requestAnimationFrame(animate);
 
@@ -334,11 +352,13 @@
                 if(p.trail.length > 400) p.trail.shift();
                 p.trail.push(p.pos.clone());
                 p.trailLine.geometry.setFromPoints(p.trail);
+                updateTrailColors(p.trailLine.geometry, p.color, p.trail.length);
 
                 // 更新投影轨迹
                 if(p.shadowTrail.length > 400) p.shadowTrail.shift();
                 p.shadowTrail.push(p.shadowBall.position.clone());
                 p.shadowTrailLine.geometry.setFromPoints(p.shadowTrail);
+                updateTrailColors(p.shadowTrailLine.geometry, 0xffffff, p.shadowTrail.length);
             }
 
             // 更新网格顶点 (只有在网格可见时才更新，优化性能)
