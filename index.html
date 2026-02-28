@@ -215,7 +215,8 @@
             const connectorMat = new THREE.LineDashedMaterial({ color: 0x555555, dashSize: 1, gapSize: 0.5 });
             const connectorLine = new THREE.Line(connectorGeo, connectorMat);
             connectorLine.computeLineDistances();
-            connectorLine.visible = planetGravityEnabled;
+            // 始终保持虚线可见
+            connectorLine.visible = true;
             scene.add(connectorLine);
             
             planets.push({
@@ -296,10 +297,9 @@
             planetGravityEnabled = !planetGravityEnabled;
             e.target.innerText = planetGravityEnabled ? '隐藏行星重力坑' : '显示行星重力坑';
             
-            // 同步控制投影球和连线的显示
+            // 仅同步控制投影球的显示，保留连线可见
             for (let p of planets) {
                 p.shadowBall.visible = planetGravityEnabled;
-                p.connectorLine.visible = planetGravityEnabled;
             }
         });
 
