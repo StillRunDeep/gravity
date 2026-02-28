@@ -93,6 +93,14 @@
                 <input type="range" id="dragSlider" min="0" max="100" step="1" value="0" style="width: 100%; margin-top: 5px;">
             </div>
 
+            <div style="margin-top: 10px; margin-bottom: 10px; pointer-events: auto;">
+                <label for="trailLengthSlider" style="font-size: 13px; color: #ccc; display: flex; justify-content: space-between;">
+                    <span>轨迹线长度:</span>
+                    <span id="trailLengthValue">400</span>
+                </label>
+                <input type="range" id="trailLengthSlider" min="200" max="600" step="10" value="400" style="width: 100%; margin-top: 5px;">
+            </div>
+
             <div class="btn-group">
                 <button id="addPlanetBtn" class="action-btn">添加随机行星</button>
                 <button id="resetBtn" class="action-btn">重置为一个</button>
@@ -315,6 +323,16 @@
             dragValueDisplay.innerText = sliderValue + '%';
         });
 
+        // 轨迹长度逻辑
+        let maxTrailLength = 400;
+        const trailLengthSlider = document.getElementById('trailLengthSlider');
+        const trailLengthValueDisplay = document.getElementById('trailLengthValue');
+
+        trailLengthSlider.addEventListener('input', (e) => {
+            maxTrailLength = parseInt(e.target.value);
+            trailLengthValueDisplay.innerText = maxTrailLength;
+        });
+
         // --- 6. 辅助函数：计算某一点的 Y 轴凹陷深度 ---
         function calculateGridY(x, z) {
             const distSun = Math.sqrt((x - sun.pos.x)**2 + (z - sun.pos.z)**2);
@@ -395,13 +413,13 @@
                 p.connectorLine.computeLineDistances();
 
                 // 更新轨迹
-                if(p.trail.length > 600) p.trail.shift();
+                if(p.trail.length > maxTrailLength) p.trail.shift();
                 p.trail.push(p.pos.clone());
                 p.trailLine.geometry.setFromPoints(p.trail);
                 updateTrailColors(p.trailLine.geometry, p.color, p.trail.length);
 
                 // 更新投影轨迹
-                if(p.shadowTrail.length > 600) p.shadowTrail.shift();
+                if(p.shadowTrail.length > maxTrailLength) p.shadowTrail.shift();
                 p.shadowTrail.push(p.shadowBall.position.clone());
                 p.shadowTrailLine.geometry.setFromPoints(p.shadowTrail);
                 updateTrailColors(p.shadowTrailLine.geometry, 0xffffff, p.shadowTrail.length);
